@@ -10,7 +10,7 @@ local fs = require("Filesystem")
 local workspace, window, menu = system.addWindow(GUI.filledWindow(1, 1, 80, 30, 0xE1E1E1))
 
 -- Get localization table dependent of current system language
---local localization = system.getCurrentScriptLocalization()
+--local localization = system.getCurrentScriptLocalization() (залупа закоментированая)
 
 
 
