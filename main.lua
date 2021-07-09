@@ -4,6 +4,7 @@ local GUI = require("GUI")
 local system = require("System")
 local fs = require("Filesystem")
 
+local textzg = ""
 ---------------------------------------------------------------------------------
 
 -- Add a new window to MineOS workspace
@@ -24,19 +25,31 @@ local function addButton(text)
 return layout:addChild(GUI.roundedButton(1, 1, 36, 3, 0xD2D2D2, 0x696969, 0x4B4B4B, 0xF0F0F0, text))
 end
 
+--local kvadrato = layout:addChild(GUI.panel(15, 21, 30, 3, 0x262626))
+
+--local namefile = layout:addChild(GUI.filesystemChooser(2, 2, 30, 3, 0xE1E1E1, 0x888888, 0x3C3C3C, 0x888888, nil, "Open", "Cancel", "Choose", "/"))
+--namefile:setMode(GUI.IO_MODE_SAVE, GUI.IO_MODE_FILE)
+--namefile.onSubmit = function(path)
+--  GUI.alert("Файл \"" .. path .. "\" выбран")
+--end
+
 local namefile = layout:addChild(GUI.input(15, 21, 30, 3, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "/numpad/MyText.txt", "Напишите сюда путь сохранения файла"))
   --if #namefile.text > 0 then
   --  GUI.alert("Установлен путь!")
   --end
 
-local lable = layout:addChild(GUI.input(15, 15, 30, 3, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "Напишите сюда текст"))
+local lable = layout:addChild(GUI.input(15, 15, 30, 3, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, textzg, "Напишите сюда текст"))
 addButton("Записать изменения.txt").onTouch = function()
   if #lable.text > 0 then
-    GUI.alert(lable.text, " - этот текст был сохранён в файл Mytext.txt")
-    fs.append(namefile.text, lable.text)
+    GUI.alert(lable.text, " - этот текст был сохранён в файл")
+    fs.write(namefile.text, lable.text)
   else
     GUI.alert("Пустая строка.")
   end
+end
+addButton("Загрузить файл.txt").onTouch = function()
+  local textzg = fs.read(namefile.text)
+  local textread = layout:addChild(GUI.text(1, 1, 0x4B4B4B, textzg))
 end
 
 
@@ -46,13 +59,23 @@ end
 
 -- Customize MineOS menu for this application by your will
 local contextMenu = menu:addContextMenuItem("File")
-contextMenu:addItem("New")
+contextMenu:addItem("Новый")
 contextMenu:addSeparator()
-contextMenu:addItem("Open")
+contextMenu:addItem("Сохранить как")
 contextMenu:addItem("Save", true)
-contextMenu:addItem("Save as")
+contextMenu:addItem("Открыть").onTouch = function()
+  local filesystemDialog = GUI.addFilesystemDialog(workspace, false, 50, math.floor(workspace.height * 0.8), "Open", "Cancel", "File name", "/")
+  filesystemDialog:setMode(GUI.IO_MODE_OPEN, GUI.IO_MODE_FILE)
+  filesystemDialog:addExtensionFilter(".txt")
+  filesystemDialog.onSubmit = function(path)
+    GUI.alert("This path was selected: " .. path)
+  end
+  
+  
+  filesystemDialog:show()
+end
 contextMenu:addSeparator()
-contextMenu:addItem("Close").onTouch = function()
+contextMenu:addItem("Закрыть").onTouch = function()
   window:remove()
 end
 
