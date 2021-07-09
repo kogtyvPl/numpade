@@ -8,7 +8,7 @@ local textzg = ""
 ---------------------------------------------------------------------------------
 
 -- Add a new window to MineOS workspace
-local workspace, window, menu = system.addWindow(GUI.filledWindow(1, 1, 80, 30, 0xE1E1E1))
+local workspace, window, menu = system.addWindow(GUI.filledWindow(1, 1, 60, 45, 0xE1E1E1))
 
 -- Get localization table dependent of current system language
 --local localization = system.getCurrentScriptLocalization() (залупа закоментированая)
@@ -37,6 +37,9 @@ local namefile = layout:addChild(GUI.input(15, 21, 30, 3, 0xEEEEEE, 0x555555, 0x
   --if #namefile.text > 0 then
   --  GUI.alert("Установлен путь!")
   --end
+  
+  
+local codeView = layout:addChild(GUI.codeView(2, 2, 30, 12, 1, 1, 1, {}, {}, GUI.LUA_SYNTAX_PATTERNS, GUI.LUA_SYNTAX_COLOR_SCHEME, true, {}))
 
 local lable = layout:addChild(GUI.input(15, 15, 30, 3, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, textzg, "Напишите сюда текст"))
 addButton("Записать изменения.txt").onTouch = function()
@@ -48,9 +51,25 @@ addButton("Записать изменения.txt").onTouch = function()
   end
 end
 addButton("Загрузить файл.txt").onTouch = function()
-  local textzg = fs.read(namefile.text)
-  local textread = layout:addChild(GUI.text(1, 1, 0x4B4B4B, textzg))
+  --local textzg = fs.read(namefile.text)
+  --local textread = layout:addChild(GUI.text(1, 1, 0x4B4B4B, textzg))
+--end
+
+  --local codeView = layout:addChild(GUI.codeView(2, 2, 72, 22, 1, 1, 1, {}, {}, GUI.LUA_SYNTAX_PATTERNS, GUI.LUA_SYNTAX_COLOR_SCHEME, true, {}))
+  local counter = 1
+  for line in require("filesystem").lines(namefile.text) do
+  -- Replace tab symbols to 2 whitespaces and Windows line endings to UNIX line endings
+    line = line:gsub("\t", "  "):gsub("\r\n", "\n")
+    codeView.maximumLineLength = math.max(codeView.maximumLineLength, unicode.len(line))
+    table.insert(codeView.lines, line)
+
+    counter = counter + 1
+    if counter > codeView.height then
+      break
+    end
+  end
 end
+
 
 
 --layout:addChild(GUI.input(37, 16, 75, 3, 0xFFFFFF, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "Напишите сюда текст")).onInputFinished = function()
