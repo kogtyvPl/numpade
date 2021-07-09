@@ -1,10 +1,11 @@
 
--- Import libraries
+-- Импорт библиотек и переменные
 local GUI = require("GUI")
 local system = require("System")
 local fs = require("Filesystem")
 
 local textzg = ""
+local codeView = ""
 ---------------------------------------------------------------------------------
 
 -- Add a new window to MineOS workspace
@@ -25,56 +26,45 @@ local function addButton(text)
 return layout:addChild(GUI.roundedButton(1, 1, 36, 3, 0xD2D2D2, 0x696969, 0x4B4B4B, 0xF0F0F0, text))
 end
 
---local kvadrato = layout:addChild(GUI.panel(15, 21, 30, 3, 0x262626))
 
---local namefile = layout:addChild(GUI.filesystemChooser(2, 2, 30, 3, 0xE1E1E1, 0x888888, 0x3C3C3C, 0x888888, nil, "Open", "Cancel", "Choose", "/"))
---namefile:setMode(GUI.IO_MODE_SAVE, GUI.IO_MODE_FILE)
---namefile.onSubmit = function(path)
---  GUI.alert("Файл \"" .. path .. "\" выбран")
---end
-
-local namefile = layout:addChild(GUI.input(15, 21, 30, 3, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "/numpad/MyText.txt", "Напишите сюда путь сохранения файла"))
-  --if #namefile.text > 0 then
-  --  GUI.alert("Установлен путь!")
-  --end
+local namefile = layout:addChild(GUI.input(15, 21, 30, 3, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "MyText.txt", "Имя файла"))
   
-  
-local codeView = layout:addChild(GUI.codeView(2, 2, 30, 12, 1, 1, 1, {}, {}, GUI.LUA_SYNTAX_PATTERNS, GUI.LUA_SYNTAX_COLOR_SCHEME, true, {}))
+local codeView = layout:addChild(GUI.codeView(2, 2, 0, 0, 1, 1, 1, {}, {}, GUI.LUA_SYNTAX_PATTERNS, GUI.LUA_SYNTAX_COLOR_SCHEME, true, {}))
 
 local lable = layout:addChild(GUI.input(15, 15, 30, 3, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, textzg, "Напишите сюда текст"))
 addButton("Записать изменения.txt").onTouch = function()
   if #lable.text > 0 then
-    GUI.alert(lable.text, " - этот текст был сохранён в файл")
-    fs.write(namefile.text, lable.text)
+    --GUI.alert(lable.text, " - этот текст был сохранён в файл")
+    fs.append("/notepad/" .. namefile.text, "\n" .. lable.text)
   else
     GUI.alert("Пустая строка.")
   end
 end
 addButton("Загрузить файл.txt").onTouch = function()
-  --local textzg = fs.read(namefile.text)
-  --local textread = layout:addChild(GUI.text(1, 1, 0x4B4B4B, textzg))
---end
-
-  --local codeView = layout:addChild(GUI.codeView(2, 2, 72, 22, 1, 1, 1, {}, {}, GUI.LUA_SYNTAX_PATTERNS, GUI.LUA_SYNTAX_COLOR_SCHEME, true, {}))
-  local counter = 1
-  for line in require("filesystem").lines(namefile.text) do
+  codeView:remove()
+  local codeView = layout:addChild(GUI.codeView(2, 2, 45, 24, 1, 1, 1, {}, {}, GUI.LUA_SYNTAX_PATTERNS, GUI.LUA_SYNTAX_COLOR_SCHEME, true, {}))
+  if #namefile.text > 0 then
+    local counter = 1
+    for line in require("filesystem").lines("/notepad/" .. namefile.text) do
   -- Replace tab symbols to 2 whitespaces and Windows line endings to UNIX line endings
-    line = line:gsub("\t", "  "):gsub("\r\n", "\n")
-    codeView.maximumLineLength = math.max(codeView.maximumLineLength, unicode.len(line))
-    table.insert(codeView.lines, line)
+      line = line:gsub("\t", "  "):gsub("\r\n", "\n")
+      codeView.maximumLineLength = math.max(codeView.maximumLineLength, unicode.len(line))
+      table.insert(codeView.lines, line)
 
-    counter = counter + 1
-    if counter > codeView.height then
-      break
+      counter = counter + 1
+      if counter > codeView.height then
+        break
+      end
     end
+  else
+    GUI.alert("Ошибка! Вы не можете загрузить не существующий файл!!!")
   end
 end
 
+layout:addChild(GUI.text(1, 1, 0x4B4B4B, "Отображение файла"))
 
+--local codeView = layout:addChild(GUI.codeView(2, 2, 45, 24, 1, 1, 1, {}, {}, GUI.LUA_SYNTAX_PATTERNS, GUI.LUA_SYNTAX_COLOR_SCHEME, true, {}))
 
---layout:addChild(GUI.input(37, 16, 75, 3, 0xFFFFFF, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "", "Напишите сюда текст")).onInputFinished = function()
---  GUI.alert("Текст написан!")
---end
 
 -- Customize MineOS menu for this application by your will
 local contextMenu = menu:addContextMenuItem("File")
