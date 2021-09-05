@@ -3,6 +3,8 @@
 local GUI = require("GUI")
 local system = require("System")
 local fs = require("Filesystem")
+local paths = require("Paths")
+local text = require("Text")
 
 local scrol = {}
 local lines = {""}
@@ -10,6 +12,20 @@ local textzg = ""
 local codeView = ""
 local cvhei = 40
 local cvwid = 48
+
+
+
+local args, options = system.parseArguments(...)
+--local iconsPath = fs.path(system.getCurrentScript()) .. "Notepad/"
+local currentDir, files = ((options.o or options.open) and args[1] and fs.exists(args[1])) and fs.path(args[1]) or paths.system.pictures
+local fileIndex = 1
+local loadedImage, title
+
+
+
+
+--local namefileloaded = text.load.files[fileIndex]
+--local loaded = files[fileIndex]
 ---------------------------------------------------------------------------------
 
 -- Add a new window to MineOS workspace
@@ -44,19 +60,68 @@ local function addButton(text)
 return buttonloy:addChild(GUI.roundedButton(1, 1, 30, 1, 0xD2D2D2, 0x696969, 0x4B4B4B, 0xF0F0F0, text))
 end
 
-local namefile = inputloy:addChild(GUI.input(15, 21, 30, 1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "MyText.txt", "Имя файла"))
+--local namefile = inputloy:addChild(GUI.input(15, 21, 30, 1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "MyText.num", "Имя файла"))
 
 local codeView = layout2:addChild(GUI.codeView(2, 2, 0, 0, 1, 1, 1, scrol, {}, GUI.LUA_SYNTAX_PATTERNS, GUI.LUA_SYNTAX_COLOR_SCHEME, true, lines))
+
+---------------------
+
+--window.onResize(window.width, window.height)
+
+files = fs.list(currentDir)
+
+local i, extension = 1
+while i <= #files do
+  extension = fs.extension(files[i])
+  
+  if extension and extension:lower() == ".num" or ".npd" or ".ntxt" or ".txt" then
+    files[i] = currentDir .. files[i]
+
+    if args and args[1] == files[i] then
+      fileIndex = i
+      NUMloads = args
+    end
+
+    i = i + 1
+  else
+    table.remove(files, i)
+  end
+end
+
+if #files == 0 then
+--   panel.hidden = true
+--   panelContainer.hidden = true
+NUMnamefile = inputloy:addChild(GUI.input(15, 21, 30, 1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, "/Notepad/MyText.num", "Путь файла"))
+
+else
+NUMnamefile = inputloy:addChild(GUI.input(15, 21, 30, 1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, NUMloads[1], "Путь"))
+
+local codeView = layout2:addChild(GUI.codeView(2, 2, cvwid, cvhei, 1, 1, 1, scrol, {}, GUI.LUA_SYNTAX_PATTERNS, GUI.LUA_SYNTAX_COLOR_SCHEME, true, {}))
+  local counter = 1
+  for line in fs.lines(NUMloads[1]) do
+  --Replace tab symbols to 2 whitespaces and Windows line endings to UNIX line endings
+    line = line:gsub("\t", "  "):gsub("\r\n", "\n")
+    codeView.maximumLineLength = math.max(codeView.maximumLineLength, unicode.len(line))
+    table.insert(codeView.lines, line)
+
+    counter = counter + 1
+    if counter > codeView.height then
+      break
+    end
+  end
+end
+
+--------------
 
 local lable = inputloy:addChild(GUI.input(15, 15, 30, 1, 0xEEEEEE, 0x555555, 0x999999, 0xFFFFFF, 0x2D2D2D, textzg, "Напишите сюда текст"))
 addButton("Записать изменения.txt").onTouch = function()
   if #lable.text > 0 then
     --GUI.alert(lable.text, " - этот текст был сохранён в файл")
-    fs.append("/notepad/" .. namefile.text, "\n" .. lable.text)
+    fs.append(NUMnamefile.text, "\n" .. lable.text)
     codeView:remove()
     local codeView = layout2:addChild(GUI.codeView(2, 2, cvwid, cvhei, 1, 1, 1, scrol, {}, GUI.LUA_SYNTAX_PATTERNS, GUI.LUA_SYNTAX_COLOR_SCHEME, true, {}))
     local counter = 1
-    for line in require("filesystem").lines("/notepad/" .. namefile.text) do
+    for line in require("filesystem").lines(NUMnamefile.text) do
   -- Replace tab symbols to 2 whitespaces and Windows line endings to UNIX line endings
       line = line:gsub("\t", "  "):gsub("\r\n", "\n")
       codeView.maximumLineLength = math.max(codeView.maximumLineLength, unicode.len(line))
@@ -72,11 +137,11 @@ addButton("Записать изменения.txt").onTouch = function()
   end
 end
 addButton("Загрузить файл.txt").onTouch = function()
-  if #namefile.text > 0 then
+  if #NUMnamefile.text > 0 then
     codeView:remove()
     local codeView = layout2:addChild(GUI.codeView(2, 2, cvwid, cvhei, 1, 1, 1, scrol, {}, GUI.LUA_SYNTAX_PATTERNS, GUI.LUA_SYNTAX_COLOR_SCHEME, true, {}))
     local counter = 1
-    for line in require("filesystem").lines("/notepad/" .. namefile.text) do
+    for line in require("filesystem").lines(NUMnamefile.text) do
   -- Replace tab symbols to 2 whitespaces and Windows line endings to UNIX line endings
       line = line:gsub("\t", "  "):gsub("\r\n", "\n")
       codeView.maximumLineLength = math.max(codeView.maximumLineLength, unicode.len(line))
@@ -92,8 +157,8 @@ addButton("Загрузить файл.txt").onTouch = function()
   end
 end
 addButton("Удалить файл").onTouch = function()
-  fs.remove("/notepad/" .. namefile.text)
-  GUI.alert("Файл /notepad/" .. namefile.text .. " удалён успешно.")
+  fs.remove(NUMnamefile.text)
+  GUI.alert("Файл /notepad/" .. NUMnamefile.text .. " удалён успешно.")
 end
 textholst:addChild(GUI.text(1, 1, 0x4B4B4B, "Размер холста:"))
 addButton("24x12").onTouch = function()
@@ -131,7 +196,7 @@ contextMenu:addItem("Save", true)
 contextMenu:addItem("Открыть").onTouch = function()
   local filesystemDialog = GUI.addFilesystemDialog(workspace, false, 50, math.floor(workspace.height * 0.8), "Open", "Cancel", "File name", "/")
   filesystemDialog:setMode(GUI.IO_MODE_OPEN, GUI.IO_MODE_FILE)
-  filesystemDialog:addExtensionFilter(".txt")
+  filesystemDialog:addExtensionFilter(".num")
   filesystemDialog.onSubmit = function(path)
     GUI.alert("This path was selected: " .. path)
   end
@@ -161,6 +226,7 @@ window2.onResize = function(newWidth, newHeight)
 end
 
 ---------------------------------------------------------------------------------
+
 
 -- Draw changes on screen after customizing your window
 workspace:draw()
